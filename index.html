@@ -7,10 +7,43 @@
       <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
    </head>
-   <body>
+
+     <style> 
+      #typing-text {
+        display: none;
+      }
+      .typing-text {
+        background-color:lightpink;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 26px;
+      color: white;
+      white-space: nowrap;
+      overflow: hidden;
+      animation: typing 15s steps(24) infinite;
+      display: block!important;
+    }
+
+
+    @keyframes typing {
+      from { width: 0; }
+      to { width: 30%; }
+    }
+</style>
+   
+   <body style="background-image: url(quiz.jpg);
+      /*  background-repeat: no-repeat;*/
+      background-size: cover;
+      background-position: fixed;">
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
       <div class="container mt-5" id="question">
          <h1 class="mb-4">Quiz App</h1>
+         <div style="justify-content: space-between;display: flex;" class="mb-2">
+            <label style="color: blue;" id="questionsCount"></label>
+            <button class="btn btn-danger" onclick="delete_LocalStorage()">Delete All Questions</button>
+         </div>
          <div class="form-group">
             <label>Question</label>
             <input type="text" class="form-control" id="questionInput" placeholder="Enter Question">
@@ -27,188 +60,295 @@
          </div>
          <div id="optionsContainer"></div>
          <button class="btn btn-primary mt-3" onclick="addQuestion()">Add Question</button>
+         <button class="btn btn-success mt-3" onclick="startQuiz()" id="start">Start Quiz</button>
       </div>
       <div class="container mt-5" id="quiz">
-         <button class="btn btn-primary" onclick="startQuiz()" id="start">Start Quiz</button>
          <div id="quizContainer" class="mt-4" style="display: none;">
-            <div id="quizquestionContainer" class="mb-3"></div>
-            <div id="quizoptionsContainer"></div>
-            <button class="btn btn-primary mt-3" onclick="nextQuestion()">Next</button>
+            <div id="quizQuestionContainer" class="mb-3"></div>
+            <div id="quizOptionsContainer"></div>
+            <div id="typing-text">Hello to the Animation</div>
+            <button class="btn btn-primary mt-3" onclick="skipQuestion()">Skip</button>
             <p id="timer" class="mt-3"></p>
          </div>
-         <p id="score" class="mt-4" style="display: none;">Total Score: <span id="totalScore">0</span></p>
-         <button id="mainmenu" style="display: none;" onclick="mainmenu()" class="mt-3">Go to Main Menu</button>
-         <button id="restart" style="display: none;" onclick="startQuiz()" class="mt-3">Restart</button>
+         <p id="score" class="mt-4" style="display: none;">Your Score: <span id="totalScore">0</span></p>
+         <button id="mainMenu" style="display: none;" onclick="mainMenu()" class="btn btn-primary mt-3">Go to Main Menu</button>
+         <button id="restart" style="display: none;" onclick="startQuiz()" class="btn btn-success mt-3">Restart</button>
+         <div id="trueAnswers" style="display: none;" class="mt-3"></div>
+         <div id="falseAnswers" style="display: none;" class="mt-3"></div>
+         <div id="passedAnswers" style="display: none;" class="mt-3"></div>
       </div>
       <script>
-         function mainmenu(){
-             $('#score').hide();
-             $('#mainmenu').hide();
-             $('#restart').hide();
-             $('#question').show();
-             $('#start').show();
-         }
-         function generateOptionsInputs() {
-             var optionsSelect = $('#optionsSelect');
-             var optionsContainer = $('#optionsContainer');
-             var numOptions = parseInt(optionsSelect.val());
-             optionsContainer.empty();
-             // options add
-             for (var i = 1; i <= numOptions; i++) {
-                 var optionListItem = $('<li>').attr({
-                     class: 'mb-2',
-                 });
-                 var optionInput = $('<input>').attr({
-                     type: 'text',
-                     
-                     placeholder: 'Enter Option ' + i
-                 });
-                 optionListItem.append(optionInput);
-                 optionsContainer.append(optionListItem);
-             }
-             var answerfield=$('<input>').attr({
-                     type: 'text',
-                     placeholder: 'Enter Correct Answer '
-                 });;
-                 optionsContainer.append(answerfield);
-         
-         }
-         function addQuestion() {
-             var questionInput = $('#questionInput');
-             if(questionInput.val()==="")
-             {
-                 alert("Please Enter a valid Question.");
-                 return;
-             }
-             var optionsSelect = $('#optionsSelect');
-             var numOptions = parseInt(optionsSelect.val());
-             // console.log(numOptions);
-             if(numOptions===0)
-             {
-                 alert("Please Input Valid Number of Options.");
-                 return;
-             } 
-             var optionsContainer = $('#optionsContainer');
-             console.log(optionsContainer)
-             var questionInputValue = $('#questionInput').val().trim();
-             if (questionInputValue !== '') {
-                 var options = $('#optionsContainer input').map(function() {
-                     return $(this).val().trim();
-                 }).get();
-                 
-                 var answerIndex = options.length - 1;
-                 var optionsWithoutAnswer = options.slice(0, answerIndex);
-                 var answer = options[answerIndex];
-                 // duplicate options
-                 if (optionsWithoutAnswer.length !== new Set(optionsWithoutAnswer).size) {
-                     alert("Duplicate values found in options.");
-                     return;
-                 }
-         
-                 // answer in options
-                 if (optionsWithoutAnswer.indexOf(answer) === -1) {
-                     alert("Answer must be in the options.");
-                     return;
-                 }
-                 if (options.some(option => option === '')) {
-                     alert("Please fill all the Options and Answer Field.");
-                 }
-                 else {       
-                     // Clear
-                     $('#questionInput').val('');
-                     $('#optionsContainer').empty();
-                     $('#optionsSelect').val('0')
-                     $('#optionContainer').empty()
-                     var storedQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];
-                     storedQuestions.push({
-                         question: questionInputValue,
-                         options: options
-                     });
-                     localStorage.setItem('quizQuestions', JSON.stringify(storedQuestions));
-                     alert('Question Added Succesfully!')
-                 }
-             } 
-             else {
-                 alert("Please Enter a valid Question.");
-             }
-         }
-         var quizQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];
-         var currentQuestionIndex = 0;
-         var totalScore = 0;
-         var timer;
-         function resetTimer() {
-             clearInterval(timer);
-             startTimer();
-         }
-         function nextQuestion() {
-             currentQuestionIndex++;
-             if (currentQuestionIndex < quizQuestions.length) {
-                 showQuestion();
-                 resetTimer();
-             } else {
-                 endQuiz();
-             }
-         }
-         function startTimer() {
-             var timeLeft = 15;
-             timer = setInterval(function () {
-                 $('#timer').text('Time remaining: ' + timeLeft + 's');
-                 if (timeLeft === 0) {
-                     nextQuestion();
-                 }
-                 timeLeft--;
-             }, 1000);
-         }
-         function startQuiz() {
-             $('#restart').css('display','none');
-             $('#mainmenu').css('display','none');
-             $('#question').css('display','none');
-             $('#start').css('display','none');
-             showQuestion();
-             $('#quizContainer').css('display','block');
-             $('#score').css('display','none');
-             $('#timer').text('Time remaining: 15s');
-             startTimer();
-         }
-         function checkAnswer(option) {
-             console.log(option)
-             var options = quizQuestions[currentQuestionIndex].options;
-             var correctAnswer = options[options.length - 1];
-             console.log(correctAnswer)
-             if (option.toLowerCase() === correctAnswer.toLowerCase()) 
-             {
-                 totalScore+=5;
-             }
-             nextQuestion();
-         }
-         function showQuestion() {
-             var quizquestionContainer = $('#quizquestionContainer');
-             var quizoptionsContainer = $('#quizoptionsContainer');
-         
-             quizquestionContainer.text('Question: ' + quizQuestions[currentQuestionIndex].question);
-         
-             quizoptionsContainer.empty();
-             quizQuestions[currentQuestionIndex].options.slice(0,-1).forEach(function (option, index) {
-                 var optionButton = $('<button>');
-                 optionButton.text(option);
-                 optionButton.click( function () {
-                     checkAnswer(option);
-                 });
-                 quizoptionsContainer.append(optionButton);
-             });
-         }
-         
-         function endQuiz() {
-             clearInterval(timer);
-             $('#quizContainer').css('display', 'none');
-             $('#score').css('display', 'block');
-             $('#mainmenu').css('display', 'block');
-             $('#restart').css('display', 'block');
-             $('#totalScore').text(totalScore);
-             currentQuestionIndex = 0;
-             totalScore = 0;
-         }
-         
+        function delete_LocalStorage()
+        {
+          localStorage.removeItem("quizQuestions");
+          quizQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];
+          $('#questionsCount').text('You have '+ quizQuestions.length +' question(s)');
+          alert('All Questions Deleted')
+        }
+        function mainMenu()
+        {
+          $('#score').hide();
+          $('#mainMenu').hide();
+          $('#restart').hide();
+          $('#question').show();
+          $('#start').show();
+          $('#trueAnswers').empty();
+          $('#falseAnswers').empty();
+          $('#passedAnswers').empty();
+          $('#trueAnswers').hide();
+          $('#falseAnswers').hide();
+          $('#passedAnswers').hide();
+        }
+        function generateOptionsInputs() 
+        {
+          var optionsSelect = $('#optionsSelect');
+          var optionsContainer = $('#optionsContainer');
+          var numOptions = parseInt(optionsSelect.val());
+          optionsContainer.empty();
+          // options add
+          for (var i = 1; i <= numOptions; i++)
+          {
+            var optionListItem = $('<li>').attr({
+              class: 'mb-2',
+            });
+            var optionInput = $('<input>').attr({
+              type: 'text',  
+              placeholder: 'Enter Option ' + i
+            });
+            optionListItem.append(optionInput);
+            optionsContainer.append(optionListItem);
+          }  
+          var answerfield=$('<input>').attr({
+            type: 'text',
+            placeholder: 'Enter Correct Answer '
+          });
+          optionsContainer.append(answerfield);
+          if(numOptions==0)
+          {
+            answerfield.hide();  
+          }
+        }
+        function addQuestion() 
+        {
+          var questionInput = $('#questionInput');
+          if(questionInput.val()==="")
+          {
+            alert("Please Enter a valid Question.");
+            return;
+          }
+          var optionsSelect = $('#optionsSelect');
+          var numOptions = parseInt(optionsSelect.val());
+          // console.log(numOptions);
+          if(numOptions===0)
+          {
+            alert("Please Input Valid Number of Options.");
+            return;
+          } 
+          var optionsContainer = $('#optionsContainer');
+          console.log(optionsContainer)
+          var questionInputValue = $('#questionInput').val().trim();
+          if (questionInputValue !== '')
+          {
+            var options = $('#optionsContainer input').map(function() {
+              return $(this).val().trim();
+            }).get();    
+            var answerIndex = options.length - 1;
+            var optionsWithoutAnswer = options.slice(0, answerIndex);
+            var answer = options[answerIndex];
+            // duplicate options
+            if (optionsWithoutAnswer.length !== new Set(optionsWithoutAnswer).size)
+            {
+              alert("Duplicate values found in options.");
+              return;
+            }
+            // answer in options
+            if (optionsWithoutAnswer.indexOf(answer) === -1)
+            {
+              alert("Answer must be in the options.");
+              return;
+            }
+            if (options.some(option => option === '')) 
+            {
+              alert("Please fill all the Options and Answer Field.");
+            }
+            else
+            {       
+              // Clear
+              $('#questionInput').val('');
+              $('#optionsContainer').empty();
+              $('#optionsSelect').val('0');
+              $('#optionContainer').empty();
+              var storedQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];
+              storedQuestions.push({
+                question: questionInputValue,
+                options: options
+              });
+              localStorage.setItem('quizQuestions', JSON.stringify(storedQuestions));
+              alert('Question Added Succesfully!');
+              $('#questionsCount').text('You have '+ storedQuestions.length +' question(s)');
+            }
+          } 
+          else
+          {
+            alert("Please Enter a valid Question.");
+          }
+        }
+        var quizQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];
+        $('#questionsCount').text('You have '+quizQuestions.length+' question(s)');
+        var currentQuestionIndex = 0;
+        var totalScore = 0;
+        var timer;
+        var count=1;
+        var randomindex=Math.floor(Math.random() * quizQuestions.length);
+        var trueFlag=0,falseFlag=0,passedFlag=0;
+        function resetTimer() 
+        {
+          clearInterval(timer);
+          startTimer();
+        }
+        function nextQuestion()
+        {
+          currentQuestionIndex++;
+          if (currentQuestionIndex < quizQuestions.length)
+          {
+            showQuestion();
+            resetTimer();
+          }
+          else 
+            endQuiz();
+        }
+        function skipQuestion()
+        {
+          passedFlag=1;
+          var question = quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].question;
+          var options = quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].options;
+          var correctAnswer = options[options.length - 1];
+          var passedAnswers=$('#passedAnswers');
+          passedAnswers.append('<span style="color: red;">+0</span> <span style="color: blue;">Question: ' + question + '</span><span style="color: green;"><br> Correct Answer: ' + correctAnswer + '</span><br><br>');
+          nextQuestion();
+        }
+        function startTimer() 
+        {
+          var timeLeft = 15;
+          timer = setInterval(function () {
+          $('#timer').text('Time remaining: ' + timeLeft + 's');
+          if (timeLeft === 0) 
+          {
+            passedFlag=1;
+            var question = quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].question;
+            var options = quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].options;
+            var correctAnswer = options[options.length - 1];
+            var passedAnswers=$('#passedAnswers');
+            passedAnswers.append('<span style="color: red;">+0</span> <span style="color: blue;">Question: ' + question + '</span><span style="color: green;"><br> Correct Answer: ' + correctAnswer + '</span><br><br>');
+            nextQuestion();
+          }
+            timeLeft--;
+          }, 1000);
+        }
+        function startQuiz() 
+        {
+          quizQuestions = JSON.parse(localStorage.getItem('quizQuestions')) || [];     
+          if(quizQuestions.length==0)
+          {
+            alert('No Questions Yet!');
+            return;
+          }
+          
+          $('#trueAnswers').empty();
+          $('#falseAnswers').empty();
+          $('#passedAnswers').empty();
+          $('#trueAnswers').append('<label>').text('CORRECT ANSWERS: ').append('<br>').css('color','green').hide();
+          $('#falseAnswers').append('<label>').text('INCORRECT ANSWERS: ').append('<br>').css('color','red').hide();
+          $('#passedAnswers').append('<label>').text('SKIPPED ANSWERS: ').append('<br>').css('color','blue').hide();
+          $('#restart').hide();
+          $('#mainMenu').hide();
+          $('#question').hide();
+          $('#start').hide();
+          showQuestion();
+          $('#quizContainer').css('display','block');
+          $('#score').hide();
+          $('#timer').text('Time remaining: 15s');
+          startTimer();
+        }
+        function checkAnswer(option) 
+        { 
+          var question = quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].question;
+          var options = quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].options;
+          var correctAnswer = options[options.length - 1];
+          if (option.toLowerCase() === correctAnswer.toLowerCase()) 
+          {
+            trueFlag=1;
+            totalScore+=5;
+            var trueAnswers=$('#trueAnswers')
+            trueAnswers.append('<span style="color: green;">+5</span> <span style="color: blue;">Question: ' + question + '</span><br> Correct Answer: <span style="color: green;">' + option + '</span><br><br>');
+            nextQuestion();
+          }
+          if (option.toLowerCase() !== correctAnswer.toLowerCase()) 
+          {
+            falseFlag=1;
+            var falseAnswers=$('#falseAnswers');
+            falseAnswers.append('<span style="color: red;">+0</span> <span style="color: blue;">Question: ' + question + '</span> <span style="color: red;"><br> Your Answer: '+option+'</span> <span style="color: green;"><br> Correct Answer: ' + correctAnswer + '</span><br><br>');
+            nextQuestion();
+          }      
+        }
+        function showQuestion() 
+        {
+          $(document).ready(function() {
+          $('#typing-text').addClass('typing-text');
+          setTimeout(function() {
+            $('#typing-text').removeClass('typing-text');
+          }, 16000);
+          });
+          var quizQuestionContainer = $('#quizQuestionContainer');
+          var quizOptionsContainer = $('#quizOptionsContainer');         
+          quizQuestionContainer.empty();
+          quizQuestionContainer.append('<span style="color: blue;">Question ' + count + ' :</span> <span>'+quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].question+'</span><br>');
+          count++;
+          quizOptionsContainer.empty();
+          quizQuestions[(currentQuestionIndex+randomindex)%quizQuestions.length].options.slice(0,-1).forEach(function (option, index)
+          {
+            var radioinput = $('<input>').attr({
+              type:'radio',
+              class:'m-1'
+            });
+            var label=$('<label>');
+              label.text(option);
+              radioinput.click( function () {
+                checkAnswer(option);
+                });
+            var br=$('<br>');
+              quizOptionsContainer.append(radioinput).append(label).append(br);
+          });
+        }
+        function endQuiz() 
+        {
+
+          clearInterval(timer);
+          $('#quizContainer').hide();
+          $('#score').css('display', 'block');
+          $('#mainMenu').show();
+          $('#restart').show();
+          if(trueFlag!==0)
+          {
+            $('#trueAnswers').css('display', 'block');
+          }
+          if(falseFlag!==0)
+          {
+            $('#falseAnswers').css('display', 'block');
+          }
+          if(passedFlag!==0)
+          {
+            $('#passedAnswers').css('display', 'block');
+          }
+          $('#totalScore').text(totalScore);
+          randomindex=Math.floor(Math.random() * quizQuestions.length);
+          currentQuestionIndex = 0;
+          totalScore = 0;
+          trueFlag=0;
+          falseFlag=0;
+          passedFlag=0;
+          count=1;
+        }  
       </script>
    </body>
 </html>
